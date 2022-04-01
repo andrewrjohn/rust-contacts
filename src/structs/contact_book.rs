@@ -26,7 +26,7 @@ impl ContactBook {
             contacts: vec![],
         };
 
-        return match Path::exists(Path::new(&book.path_from_name())) {
+        return match Path::exists(Path::new(&book.get_path())) {
             true => Err("Contact book with that name already exists."),
             false => {
                 let _ = book.save();
@@ -35,7 +35,7 @@ impl ContactBook {
         };
     }
 
-    fn path_from_name(&self) -> String {
+    fn get_path(&self) -> String {
         format!("{}.json", self.name)
     }
 
@@ -50,6 +50,10 @@ impl ContactBook {
         let contact_book: ContactBook = serde_json::from_str(raw.as_str()).unwrap();
 
         contact_book
+    }
+
+    pub fn delete(&self) {
+        fs::remove_file(self.get_path()).unwrap();
     }
 
     pub fn add_contact(&mut self, contact: Contact) -> Result<Contact, &'static str> {
@@ -68,6 +72,8 @@ impl ContactBook {
 
 #[cfg(test)]
 mod tests {
+    use rand::{distributions::Alphanumeric, thread_rng, Rng};
+
     use crate::structs::Address;
 
     use super::*;
@@ -87,24 +93,51 @@ mod tests {
         }
     }
 
+    fn get_rand_string() -> String {
+        let s: String = thread_rng()
+            .sample_iter(Alphanumeric)
+            .take(7)
+            .map(char::from)
+            .collect();
+
+        s
+    }
+
     #[test]
-    fn add_contact() {
+    fn new_method() {
+        let contact_book = ContactBook::new(get_rand_string().as_str()).unwrap();
+        assert!(Path::exists(Path::new(&contact_book.get_path())));
+        contact_book.delete();
+    }
+
+    #[test]
+    fn delete_method() {
+        let contact_book = ContactBook::new(get_rand_string().as_str()).unwrap();
+        contact_book.delete();
+        assert!(!Path::exists(Path::new(&contact_book.get_path())));
+    }
+
+    #[test]
+    fn add_contact_method() {
         let contact = create_mock_contact();
-        let mut contact_book = ContactBook::new("test1").unwrap();
+        let mut contact_book = ContactBook::new(get_rand_string().as_str()).unwrap();
         let added = contact_book
             .add_contact(contact.clone())
             .expect("contact to be added");
 
         assert_eq!(added, contact);
+
+        contact_book.delete();
     }
 
     #[test]
     #[should_panic]
-    fn add_duplicate_contact() {
+    fn add_contact_method_with_duplicate() {
         let contact = create_mock_contact();
         let contact1 = create_mock_contact();
 
-        let mut contact_book = ContactBook::new("test").unwrap();
+        let mut contact_book = ContactBook::new(get_rand_string().as_str()).unwrap();
+        contact_book.delete();
 
         contact_book
             .add_contact(contact)
@@ -113,5 +146,13 @@ mod tests {
         contact_book
             .add_contact(contact1)
             .expect("contact to be added");
+    }
+
+    #[test]
+    fn get_path_method() {
+        let name = get_rand_string();
+        let contact_book = ContactBook::new(name.as_str()).unwrap();
+        assert_eq!(contact_book.get_path(), format!("{}.json", name.as_str()));
+        contact_book.delete();
     }
 }

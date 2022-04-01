@@ -33,6 +33,7 @@ fn main() {
 
     if let Some(name) = args.view {
         let book = ContactBook::from_disk(name.as_str());
+        color_print!(cyan, "Viewing contact book: {}:", book.name);
         println!("{}", book)
     }
 }
