@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::color_print;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ContactBook {
     pub name: String,
     pub contacts: Vec<Contact>,
@@ -45,11 +45,14 @@ impl ContactBook {
         fs::write(format!("{}.json", self.name), serialized)
     }
 
-    pub fn from_disk(name: &str) -> Self {
-        let raw = fs::read_to_string(format!("{}.json", name)).unwrap();
-        let contact_book: ContactBook = serde_json::from_str(raw.as_str()).unwrap();
+    pub fn from_disk(name: &str) -> Option<ContactBook> {
+        if let Ok(raw) = fs::read_to_string(format!("{}.json", name)) {
+            let contact_book: ContactBook = serde_json::from_str(raw.as_str()).unwrap();
 
-        contact_book
+            Some(contact_book)
+        } else {
+            None
+        }
     }
 
     pub fn delete(&self) {
