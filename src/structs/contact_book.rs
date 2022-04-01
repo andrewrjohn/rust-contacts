@@ -1,24 +1,42 @@
-use std::fs;
+use std::{fs, path::Path};
 
 use super::Contact;
+use console::style;
 use serde::{Deserialize, Serialize};
+
+use crate::color_print;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ContactBook {
-    name: String,
-    contacts: Vec<Contact>,
+    pub name: String,
+    pub contacts: Vec<Contact>,
+}
+
+impl std::fmt::Display for ContactBook {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_json::to_string_pretty(self).unwrap())
+    }
 }
 
 impl ContactBook {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str) -> Result<Self, &'static str> {
+        color_print!(cyan, "Creating...");
         let book = Self {
             name: name.to_string(),
             contacts: vec![],
         };
 
-        book.save();
+        return match Path::exists(Path::new(&book.path_from_name())) {
+            true => Err("Contact book with that name already exists."),
+            false => {
+                let _ = book.save();
+                Ok(book)
+            }
+        };
+    }
 
-        book
+    fn path_from_name(&self) -> String {
+        format!("{}.json", self.name)
     }
 
     fn save(&self) -> Result<(), std::io::Error> {
@@ -72,7 +90,7 @@ mod tests {
     #[test]
     fn add_contact() {
         let contact = create_mock_contact();
-        let mut contact_book = ContactBook::new("test1");
+        let mut contact_book = ContactBook::new("test1").unwrap();
         let added = contact_book
             .add_contact(contact.clone())
             .expect("contact to be added");
@@ -86,7 +104,7 @@ mod tests {
         let contact = create_mock_contact();
         let contact1 = create_mock_contact();
 
-        let mut contact_book = ContactBook::new("test");
+        let mut contact_book = ContactBook::new("test").unwrap();
 
         contact_book
             .add_contact(contact)

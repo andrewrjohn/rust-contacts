@@ -1,28 +1,38 @@
+mod macros;
 mod structs;
 
-use crate::structs::{Address, Contact, ContactBook};
+use crate::structs::ContactBook;
+use clap::Parser;
+use console::style;
+
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    #[clap(long, help = "Create a new contact book")]
+    new: Option<String>,
+
+    #[clap(long, help = "View a contact book by name")]
+    view: Option<String>,
+}
+
+fn new_command(name: String) {
+    match ContactBook::new(name.as_str()) {
+        Ok(created) => {
+            color_print!(green, "Created contact book: {}", created.name)
+        }
+        Err(err) => color_print!(red, "Error creating contact book: {}", err),
+    }
+}
 
 fn main() {
-    // let mut contact_book = ContactBook::new("business_contacts");
+    let args = Args::parse();
 
-    // let address = Address {
-    //     street: "123 Main St.".to_string(),
-    //     city: "Pleasantville".to_string(),
-    //     state: "Tennessee".to_string(),
-    //     postal_code: "55555".to_string(),
-    // };
+    if let Some(name) = args.new {
+        new_command(name)
+    }
 
-    // let contact = Contact {
-    //     name: String::from("Andrew"),
-    //     phone_number: 7632480172,
-    //     address,
-    // };
-
-    // contact_book
-    //     .add_contact(contact)
-    //     .expect("contact to be added");
-
-    let contact_book_disk = ContactBook::from_disk("business_contacts");
-
-    println!("{:?}", contact_book_disk);
+    if let Some(name) = args.view {
+        let book = ContactBook::from_disk(name.as_str());
+        println!("{}", book)
+    }
 }
