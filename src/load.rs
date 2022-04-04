@@ -1,10 +1,12 @@
+use std::{borrow::BorrowMut, fmt::Display};
+
 use console::style;
 use dialoguer::{theme::ColorfulTheme, Input, Select};
 use serde_json::json;
 
 use crate::{
     color_print, initial_menu,
-    structs::{Contact, ContactBook},
+    structs::{Address, Contact, ContactBook},
 };
 
 #[derive(Debug)]
@@ -50,9 +52,50 @@ fn search(contacts: ContactBook) {
     }
 }
 
+#[derive(Debug)]
+enum YesNo {
+    Yes,
+    No,
+}
+
+impl Display for YesNo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+fn add(book: &mut ContactBook) {
+    let name: String = Input::new().with_prompt("Name").interact_text().unwrap();
+    let phone: String = Input::new().with_prompt("Phone").interact_text().unwrap();
+
+    let add_address_items = vec![YesNo::Yes, YesNo::No];
+
+    let index = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Add physical address?")
+        .items(&add_address_items)
+        .report(true)
+        .default(1)
+        .interact()
+        .unwrap();
+
+    let contact = Contact {
+        name,
+        phone_number: phone.parse().expect("phone number must be a number"),
+        address: Address::from_empty(),
+    };
+
+    match add_address_items[index] {
+        YesNo::Yes => todo!(),
+        YesNo::No => {
+            let _ = book.add_contact(contact).expect("can't add contact");
+        }
+    }
+}
+
 fn load_menu(name: String) {
+    println!();
     match ContactBook::from_disk(name.as_str()) {
-        Some(contacts) => {
+        Some(mut contacts) => {
             color_print!(
                 cyan,
                 "Viewing: {} ({} contacts found)",
@@ -80,7 +123,10 @@ fn load_menu(name: String) {
                     search(contacts);
                     load_menu(name)
                 }
-                LoadMenu::Add => todo!(),
+                LoadMenu::Add => {
+                    add(contacts.borrow_mut());
+                    load_menu(name)
+                }
                 LoadMenu::Remove => todo!(),
                 LoadMenu::Back => initial_menu(),
             }

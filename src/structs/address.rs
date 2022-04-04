@@ -10,6 +10,17 @@ pub struct Address {
     pub postal_code: String,
 }
 
+impl Address {
+    pub fn from_empty() -> Self {
+        Address {
+            street: "".to_string(),
+            city: "".to_string(),
+            state: "".to_string(),
+            postal_code: "".to_string(),
+        }
+    }
+}
+
 impl fmt::Display for Address {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
