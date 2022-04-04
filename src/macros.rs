@@ -11,10 +11,10 @@
 
 #[macro_export]
 macro_rules! color_print {
-    ( $color:ident, $l:literal, $( $x:expr),+ ) => {
+    ( $color:ident, $l:literal, $( $x:expr),* ) => {
         println!(
             "{}",
-            style(format!($l, ($($x),+))).$color()
+            style(format!($l, $($x),*)).$color()
         )
     };
     ( $color:ident, $l:literal ) => {

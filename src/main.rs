@@ -43,46 +43,52 @@ impl std::fmt::Display for SingleOptions {
     }
 }
 
-fn search(contacts: &ContactBook) {
+fn search(contacts: ContactBook) {
+    println!();
     let search_input: String = Input::new()
-        .with_prompt("Enter the name of the contact book")
+        .with_prompt("Search by name (or 'quit' to cancel search)")
         .interact_text()
         .unwrap();
 
-    let searched: Vec<Contact> = contacts
-        .contacts
-        .into_iter()
-        .filter(|c| {
-            c.name
-                .to_lowercase()
-                .contains(search_input.to_lowercase().as_str())
-        })
-        .collect();
+    if search_input != "quit" {
+        let searched: Vec<Contact> = contacts
+            .contacts
+            .clone()
+            .into_iter()
+            .filter(|c| {
+                c.name
+                    .to_lowercase()
+                    .contains(search_input.to_lowercase().as_str())
+            })
+            .collect();
 
-    let obj = json!(searched);
+        let obj = json!(searched);
 
-    println!();
-    color_print!(cyan, "Search results ({})", searched.len());
-    println!("{}", serde_json::to_string_pretty(&obj).unwrap());
+        println!();
+        color_print!(cyan, "Search results ({})", searched.len());
+        println!("{}", serde_json::to_string_pretty(&obj).unwrap());
 
-    search(contacts);
+        search(contacts);
+    }
 }
 
 fn load() {
     let input: String = Input::new()
         .with_prompt("Enter the name of the contact book")
+        .with_initial_text("my_contacts")
         .interact_text()
         .unwrap();
 
     match ContactBook::from_disk(input.as_str()) {
         Some(contacts) => {
-            println!(
+            color_print!(
+                cyan,
                 "Viewing: {} ({} contacts found)",
                 contacts.name,
                 contacts.contacts.len()
             );
 
-            search(&contacts);
+            search(contacts);
         }
         None => color_print!(red, "Contact book not found: {}", input),
     }
