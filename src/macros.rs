@@ -8,7 +8,6 @@
 /// color_print!(green, "Hello!");
 /// color_print!(green, "Hello, {}", name);
 /// ```
-
 #[macro_export]
 macro_rules! color_print {
     ( $color:ident, $l:literal, $( $x:expr),* ) => {
